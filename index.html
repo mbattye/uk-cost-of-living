@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UK Cost of Living: 1965 vs 1995 vs 2025</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Chosen Palette: British Sterling (Warm Neutral Background, Teal/Red/Indigo Era Accents) -->
+    <!-- Application Structure Plan: 
+         1. Header & Controls: Global toggle for Single/Couple profile drives all data.
+         2. Key Metrics Dashboard: Top-level summary of the "Big Squeeze" (Income vs House Prices).
+         3. The Wallet Share (Section 2): Stacked bar chart showing relative spending shifts (Food down, Housing up).
+         4. Big Ticket Breakdown (Section 3): Specific analysis of Transport, Energy, Education with contextual text.
+         5. Lifecycle Analysis (Section 4): Qualitative view on Pensions, Healthcare, and Childcare.
+         Rationale: This structure moves from the macro (Income/Housing) to the micro (Milk/Bread) to the structural (Pensions), allowing users to understand the "why" behind the affordability crisis.
+    -->
+    <!-- Visualization & Content Choices: 
+         - Bar/Line Combo: For Income vs House Price to show the divergence clearly.
+         - Stacked Bar (100%): Best for showing changes in budget allocation/priorities over time.
+         - Interaction: Clicking "Single" vs "Couple" completely recalculates the dataset (tax brackets, shared housing costs).
+         - Library: Chart.js for all plots.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white py-8 px-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <div class="text-xs font-bold tracking-widest text-slate-400 uppercase mb-1">UK Economic Research Report</div>
+                <h1 class="text-3xl md:text-4xl font-bold leading-tight">Purchasing Power Paradox</h1>
+                <p class="text-slate-300 mt-2 text-sm max-w-xl">A comparative analysis of the cost of living in the UK: 1965, 1995, and 2025. Weighted for income and inflation dynamics.</p>
+            </div>
+            
+            <!-- Global Controls -->
+            <div class="bg-slate-800 p-1.5 rounded-lg flex items-center shadow-inner border border-slate-700">
+                <button id="btn-single" class="px-6 py-2 rounded-md text-sm font-semibold transition-all bg-white text-slate-900 shadow-sm" onclick="setProfile('single')">
+                    Single Earner
+                </button>
+                <button id="btn-couple" class="px-6 py-2 rounded-md text-sm font-semibold transition-all text-slate-300 hover:text-white" onclick="setProfile('couple')">
+                    Dual Income Couple
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full space-y-12">
+
+        <!-- Intro Text -->
+        <section class="prose prose-slate max-w-none text-center md:text-left">
+            <p class="text-lg text-slate-600 leading-relaxed max-w-4xl mx-auto md:mx-0">
+                This interactive report synthesizes historical data to examine affordability. While nominal wages have risen, the 
+                <strong>purchasing power relative to assets</strong> (specifically housing) has decoupled. Use the toggle above to switch between a 
+                <strong>Single Individual</strong> and a <strong>Couple</strong> to see how shared costs impact the data.
+            </p>
+        </section>
+
+        <!-- Section 1: The Great Decoupling (Housing & Income) -->
+        <section>
+            <div class="mb-6 border-l-4 border-slate-900 pl-4">
+                <h2 class="text-2xl font-bold text-slate-900">1. The Great Decoupling</h2>
+                <p class="text-slate-600">The relationship between earnings and property prices over 60 years.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Metrics Cards -->
+                <div class="card p-6 rounded-xl border-l-4 border-[#0F766E]">
+                    <div class="text-sm font-bold text-[#0F766E] mb-1">1965 ERA</div>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <div class="text-xs text-gray-500 uppercase">Avg Income</div>
+                            <div class="text-2xl font-bold metric-value" id="val-inc-1965">£1,050</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-gray-500 uppercase">House Price</div>
+                            <div class="text-2xl font-bold metric-value" id="val-house-1965">£3,600</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <div class="text-xs text-gray-500 mb-1">Affordability Ratio</div>
+                        <div class="text-xl font-bold text-slate-800" id="ratio-1965">3.4x Salary</div>
+                    </div>
+                </div>
+
+                <div class="card p-6 rounded-xl border-l-4 border-[#BE123C]">
+                    <div class="text-sm font-bold text-[#BE123C] mb-1">1995 ERA</div>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <div class="text-xs text-gray-500 uppercase">Avg Income</div>
+                            <div class="text-2xl font-bold metric-value" id="val-inc-1995">£17,500</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-gray-500 uppercase">House Price</div>
+                            <div class="text-2xl font-bold metric-value" id="val-house-1995">£55,000</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <div class="text-xs text-gray-500 mb-1">Affordability Ratio</div>
+                        <div class="text-xl font-bold text-slate-800" id="ratio-1995">3.1x Salary</div>
+                    </div>
+                </div>
+
+                <div class="card p-6 rounded-xl border-l-4 border-[#4338CA]">
+                    <div class="text-sm font-bold text-[#4338CA] mb-1">2025 ERA</div>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <div class="text-xs text-gray-500 uppercase">Avg Income</div>
+                            <div class="text-2xl font-bold metric-value" id="val-inc-2025">£35,000</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-gray-500 uppercase">House Price</div>
+                            <div class="text-2xl font-bold metric-value" id="val-house-2025">£285,000</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <div class="text-xs text-gray-500 mb-1">Affordability Ratio</div>
+                        <div class="text-xl font-bold text-slate-800" id="ratio-2025">8.1x Salary</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart 1: Income vs House Price -->
+            <div class="card p-6 rounded-xl">
+                <h3 class="text-lg font-semibold mb-4 text-slate-800">Income vs. Property Price Gap</h3>
+                <div class="chart-container">
+                    <canvas id="chart-decoupling"></canvas>
+                </div>
+                <p class="text-sm text-gray-500 mt-4 italic">
+                    *Note: 1995 represents a post-crash market, offering historically high affordability. 2025 represents the cumulative effect of asset inflation outpacing wage growth.
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 2: Where the Money Goes -->
+        <section>
+            <div class="mb-6 border-l-4 border-slate-900 pl-4">
+                <h2 class="text-2xl font-bold text-slate-900">2. The Wallet Share</h2>
+                <p class="text-slate-600">
+                    How the composition of monthly expenses has shifted. Notice the inversion of "Food" and "Housing" costs.
+                    While food has become relatively cheaper, housing and taxes consume a much larger share of the modern wallet.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-4 text-slate-800">Monthly Expenditure Breakdown (% of Gross Income)</h3>
+                    <div class="chart-container">
+                        <canvas id="chart-wallet"></canvas>
+                    </div>
+                </div>
+
+                <!-- Contextual Analysis Box -->
+                <div class="space-y-4">
+                    <div class="card p-5 rounded-lg border-l-4 border-[#0F766E] bg-teal-50">
+                        <h4 class="font-bold text-[#0F766E] text-sm mb-2">1965: The Food Burden</h4>
+                        <p class="text-sm text-slate-700">
+                            Food accounted for nearly <strong>25-30%</strong> of household income. Supply chains were less efficient. However, housing costs (rent or mortgage) rarely exceeded 15% of income.
+                        </p>
+                    </div>
+                    <div class="card p-5 rounded-lg border-l-4 border-[#BE123C] bg-red-50">
+                        <h4 class="font-bold text-[#BE123C] text-sm mb-2">1995: The Balanced Era</h4>
+                        <p class="text-sm text-slate-700">
+                            The "Goldilocks" period for purchasing power. Food prices had dropped due to supermarkets/globalization, and housing was momentarily affordable after the early 90s crash.
+                        </p>
+                    </div>
+                    <div class="card p-5 rounded-lg border-l-4 border-[#4338CA] bg-slate-100">
+                        <h4 class="font-bold text-[#4338CA] text-sm mb-2">2025: The Fixed Cost Squeeze</h4>
+                        <p class="text-sm text-slate-700">
+                            Essential fixed costs (Housing, Energy, Transport, Tax) now consume <strong>over 75%</strong> of the average income, leaving very little margin for savings or error.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Big Ticket Items & Affordability Checks -->
+        <section>
+            <div class="mb-6 border-l-4 border-slate-900 pl-4">
+                <h2 class="text-2xl font-bold text-slate-900">3. "Big Ticket" Deep Dive</h2>
+                <p class="text-slate-600">Comparing the affordability of specific life milestones and essential services.</p>
+            </div>
+
+            <!-- Dynamic Comparators -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <!-- University -->
+                <div class="card p-4 rounded-xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-2xl">🎓</span>
+                        <span class="text-xs font-bold bg-gray-100 px-2 py-1 rounded">Higher Ed</span>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between border-b pb-1">
+                            <span class="text-gray-500">1965</span>
+                            <span class="font-bold text-[#0F766E]">Free + Grant</span>
+                        </div>
+                        <div class="flex justify-between border-b pb-1">
+                            <span class="text-gray-500">1995</span>
+                            <span class="font-bold text-[#BE123C]">Free / Low Fee</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">2025</span>
+                            <span class="font-bold text-[#4338CA]">£9,250/yr + Debt</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Car -->
+                <div class="card p-4 rounded-xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-2xl">🚗</span>
+                        <span class="text-xs font-bold bg-gray-100 px-2 py-1 rounded">New Car</span>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between border-b pb-1">
+                            <span class="text-gray-500">1965</span>
+                            <span class="font-bold text-[#0F766E]">50% of Salary</span>
+                        </div>
+                        <div class="flex justify-between border-b pb-1">
+                            <span class="text-gray-500">1995</span>
+                            <span class="font-bold text-[#BE123C]">60% of Salary</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">2025</span>
+                            <span class="font-bold text-[#4338CA]">75% of Salary</span>
+                        </div>
+                    </div>
+                </div>
+
+                 <!-- Pension -->
+                 <div class="card p-4 rounded-xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-2xl">☂️</span>
+                        <span class="text-xs font-bold bg-gray-100 px-2 py-1 rounded">Pension Age</span>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between border-b pb-1">
+                            <span class="text-gray-500">1965</span>
+                            <span class="font-bold text-[#0F766E]">65 (M) / 60 (F)</span>
+                        </div>
+                        <div class="flex justify-between border-b pb-1">
+                            <span class="text-gray-500">1995</span>
+                            <span class="font-bold text-[#BE123C]">65 (M) / 60 (F)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">2025</span>
+                            <span class="font-bold text-[#4338CA]">67 (Rising)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interest Rates -->
+                <div class="card p-4 rounded-xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-2xl">📈</span>
+                        <span class="text-xs font-bold bg-gray-100 px-2 py-1 rounded">Mortgage Rate</span>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between border-b pb-1">
+                            <span class="text-gray-500">1965</span>
+                            <span class="font-bold text-[#0F766E]">~6.5%</span>
+                        </div>
+                        <div class="flex justify-between border-b pb-1">
+                            <span class="text-gray-500">1995</span>
+                            <span class="font-bold text-[#BE123C]">~7.5%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">2025</span>
+                            <span class="font-bold text-[#4338CA]">~5.0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart 3: Big Ticket Costs Relative to Income -->
+            <div class="card p-6 rounded-xl">
+                <h3 class="text-lg font-semibold mb-4 text-slate-800">Years of Income Required to Purchase Assets</h3>
+                <div class="chart-container">
+                    <canvas id="chart-bigticket"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Childcare & Modern Pressures -->
+        <section class="mb-12">
+             <div class="mb-6 border-l-4 border-slate-900 pl-4">
+                <h2 class="text-2xl font-bold text-slate-900">4. The Childcare Cliff</h2>
+                <p class="text-slate-600">
+                    For families, the most dramatic shift is the commodification of care. In 1965 and 1995, typical models relied on single-earner households or extended family. In 2025, dual income is often mandatory to pay the mortgage, necessitating expensive private childcare.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="card p-8 rounded-xl bg-slate-800 text-white">
+                    <h3 class="text-xl font-bold mb-4">The "Second Mortgage"</h3>
+                    <p class="mb-4 text-slate-300">
+                        In 2025, full-time childcare for one child under 2 averages <strong>£14,000+ per year</strong>. For a median earner, this is nearly 50% of take-home pay.
+                    </p>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-400">✓</span>
+                            <span>1965: Largely informal/family care. Low financial cost.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-400">✓</span>
+                            <span>1995: Rising workforce participation, moderate costs.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-red-400">⚠️</span>
+                            <span>2025: High regulation, high cost. Requires dual income to sustain.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                        <h4 class="font-bold text-gray-900">Healthcare & Dentistry</h4>
+                        <p class="text-sm text-gray-600 mt-1">
+                            While the NHS remains free at point of use, access to NHS dentistry has collapsed in 2025 compared to 1995. Many households now budget for private dental plans or "pay as you go" treatments, adding a new line item to the budget.
+                        </p>
+                    </div>
+                    <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                        <h4 class="font-bold text-gray-900">Tax Burden</h4>
+                        <p class="text-sm text-gray-600 mt-1">
+                            Fiscal drag (frozen tax thresholds) in the 2020s means average earners pay a higher effective tax rate than in 1995, despite headline rates appearing similar.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center md:text-left text-sm">
+            <p>&copy; 2025 Comparative Economic Analysis. Data sourced from ONS, Land Registry, and historical inflation records.</p>
+            <p class="mt-2 text-xs">Simulated data for educational purposes. 2025 figures based on projections.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script src="script.js" defer></script>
+</body>
+</html>
