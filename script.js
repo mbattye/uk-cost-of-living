@@ -1,3 +1,16 @@
+// --- DOWNLOAD LINKS CONFIGURATION ---
+// Update these URLs with your actual file locations
+const downloadLinks = {
+    // Option 1: Files in GitHub repo (e.g., /downloads/report.pdf)
+    pdf: '/downloads/report.pdf',  // or Google Drive direct download link
+    audio: '/downloads/audio.m4a',  // or Google Drive direct download link
+    // Option 2: Google Drive direct download links
+    // pdf: 'https://drive.google.com/uc?export=download&id=YOUR_FILE_ID',
+    // audio: 'https://drive.google.com/uc?export=download&id=YOUR_FILE_ID',
+    // Option 3: Google Docs view link
+    docs: 'https://docs.google.com/document/d/1ORKJJJea1i74nHditmlzYvUotS2iwaeSjUDwX5US4P0/edit?usp=sharing'
+};
+
 // --- DATA STORE ---
 // Weights and absolute values for Single (S) and Couple (C) profiles
 const dataStore = {
@@ -230,5 +243,26 @@ function renderBigTicketChart(data) {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     updateDashboard();
+    setupDownloadLinks();
 });
+
+// Setup download links
+function setupDownloadLinks() {
+    const pdfLink = document.getElementById('download-pdf');
+    const audioLink = document.getElementById('download-audio');
+    const docsLink = document.getElementById('download-docs');
+    
+    if (pdfLink && downloadLinks.pdf) {
+        pdfLink.href = downloadLinks.pdf;
+    }
+    
+    if (audioLink && downloadLinks.audio) {
+        audioLink.href = downloadLinks.audio;
+        audioLink.download = 'uk-cost-of-living-audio.mp3'; // Suggested filename
+    }
+    
+    if (docsLink && downloadLinks.docs) {
+        docsLink.href = downloadLinks.docs;
+    }
+}
 
